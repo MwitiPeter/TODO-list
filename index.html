@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Tasks</title>
+    <style>
+        :root {
+            --neon-green: #39ff14;
+            --matrix-green: #0f0;
+        }
+
+        body {
+            background: #000;
+            color: var(--neon-green);
+            font-family: 'Courier New', monospace;
+        }
+
+        #todo-form {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            max-width: 600px;
+            margin: 2rem auto;
+        }
+
+        input, button {
+            background: #111;
+            border: 2px solid var(--neon-green);
+            color: var(--neon-green);
+            padding: 0.8rem;
+            font-family: inherit;
+        }
+
+        button {
+            background: linear-gradient(45deg, #111, #222);
+            cursor: pointer;
+            transition: 0.3s;
+            text-shadow: 0 0 5px var(--neon-green);
+        }
+
+        button:hover {
+            background: linear-gradient(45deg, #222, #111);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--neon-green);
+        }
+
+        #todo-list {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+            border: 2px solid var(--neon-green);
+        }
+
+        .task {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+            position: relative;
+            transition: 0.3s;
+        }
+
+        .task::before {
+            content: '>';
+            position: absolute;
+            left: -20px;
+            opacity: 0;
+            color: var(--matrix-green);
+            transition: 0.3s;
+        }
+
+        .task:hover::before {
+            opacity: 1;
+            left: -15px;
+        }
+
+        .completed {
+            opacity: 0.5;
+            position: relative;
+        }
+
+        .completed::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--matrix-green);
+            animation: strike 0.3s forwards;
+        }
+
+        @keyframes strike {
+            to { width: 100%; }
+        }
+
+        .delete-btn {
+            background: #300;
+            border-color: #f00;
+            color: #f00;
+        }
+    </style>
+</head>
+<body>
+    <form id="todo-form">
+        <input type="text" id="task-input" placeholder="Enter protocol...">
+        <button type="submit">Execute</button>
+    </form>
+    <ul id="todo-list"></ul>
+
+    <script>
+        const matrixText = (element) => {
+            const original = element.textContent;
+            element.textContent = original.split('').map(() => 
+                String.fromCharCode(0x30A0 + Math.random() * 96)).join('');
+            
+            setTimeout(() => element.textContent = original, 50);
+        };
+
+        const storageKey = 'cyberTasks';
+        let tasks = JSON.parse(localStorage.getItem(storageKey)) || [];
+
+        const save = () => localStorage.setItem(storageKey, JSON.stringify(tasks));
+
+        const render = () => {
+            const list = document.getElementById('todo-list');
+            list.innerHTML = tasks.map((task, index) => `
+                <li class="task ${task.completed ? 'completed' : ''}">
+                    <span>${task.text}</span>
+                    <div>
+                        <button onclick="toggleTask(${index})">${task.completed ? 'Reboot' : 'Complete'}</button>
+                        <button class="delete-btn" onclick="deleteTask(${index})">Delete</button>
+                    </div>
+                </li>
+            `).join('');
+        };
+
+        const addTask = text => {
+            tasks = [...tasks, { text, completed: false }];
+            save();
+            render();
+        };
+
+        window.toggleTask = index => {
+            tasks[index].completed = !tasks[index].completed;
+            save();
+            render();
+        };
+
+        window.deleteTask = index => {
+            tasks = tasks.filter((_, i) => i !== index);
+            save();
+            render();
+        };
+
+        document.getElementById('todo-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const input = document.getElementById('task-input');
+            if (input.value.trim()) {
+                addTask(input.value.trim());
+                input.value = '';
+                matrixText(e.submitter);
+            }
+        });
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>
